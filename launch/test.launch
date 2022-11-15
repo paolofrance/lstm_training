@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <node pkg="lstm_training" type="lstm_train.py" name="lstm_train" output="screen"/>
+<!--  <node pkg="lstm_training" type="param_loader.py" name="param_loader" output="screen"/>-->
+  <rosparam command="load" file="$(find lstm_training)/config/train_config.yaml" />
+
+</launch>

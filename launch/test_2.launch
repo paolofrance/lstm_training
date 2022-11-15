@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <node pkg="lstm_training" type="mylstm_project.py" name="mylstm_project" output="screen"/>
+
+</launch>
