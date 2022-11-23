@@ -6,6 +6,8 @@ import torch
 import time
 import datetime
 import copy
+from param_loader import ParamLoader
+
 
 def smoother(x, y_rough, kind_of_filter, l_win, r_win, b):
     # x is the input of the NN (coord x and y of the past trajectory)
@@ -79,15 +81,22 @@ class TrainTestEva:
             print(f"Training phase...")
             for param in self.model.lstm.parameters():        # probably True by default
                 param.requires_grad = True
+        print("qq4")
 
         # at each epoch train  on all the trains_loader dataset, train_loader dataset is organized in batches
         for epoch in range(1, n_epochs + 1):
             t0 = time.time()
             batch_losses = []
             # TRAIN
+            print("loading...")
+            # print(train_loader)
+
             for x_batch, y_batch in train_loader:
+
                 x_batch = x_batch.view([x_batch.shape[0], -1, n_features]).to(self.device).float()
+
                 y_batch = y_batch.to(self.device).float()
+
                 if self.tl:
                     loss = self.train_step_tl(x_batch, y_batch)  # loss of single train example
                 else:
@@ -99,6 +108,7 @@ class TrainTestEva:
             # VALIDATION
             with torch.no_grad():                           # (~ disable gradient computation to speed up)
                 batch_test_losses = []
+
                 for x_batch, y_batch in test_loader:
                     x_batch = x_batch.view([x_batch.shape[0], -1, n_features]).to(self.device).float()
                     y_batch = y_batch.to(self.device).float()
@@ -122,10 +132,10 @@ class TrainTestEva:
             if epoch > n_epochs:
                 print('\n')
             scheduler.step()
-
         return self.model
 
-    def evaluate(self, dataloader, num_samples, n_features):
+    def evaluate(self, dataloader, num_samples, n_features, array_of_scaler):
+        pl = ParamLoader()
         print('Evaluation...')
         # NB! Here 'x', 'y' means input and output of the NN, NOT COORDINATE!
         x_sample, y_sample = next(iter(dataloader))
@@ -167,24 +177,29 @@ class TrainTestEva:
                 plt.title(f"Normalized: XY plane - Prediction n°: {i + 1}/{num_samples}")
                 # Assuming header (0,1) of topic (0) are x,y of my desired predicted output
                 file_name = "normal_pred_n_" + str(i + 1) + "_of_" + str(num_samples) + ".pdf"
-                plt.savefig(DATA_PATH + '/plots/' + file_name)
+                # print(file_name)
+                # print(pl.data_path)
+                plt.savefig(pl.data_path + '/plots/' + file_name)
+                # print("problemi qua")
+                # print(array_of_scaler)
+
                 # DENORMALIZED:
                 plt.figure(f"DENORM Plot test {i + 1}/{num_samples}")
-                plt.plot(ARRAY_OF_SCALER[0, 0].inverse_transform(x_sample[i, :, 0].reshape(-1, 1)),
-                         ARRAY_OF_SCALER[0, 1].inverse_transform(x_sample[i, :, 1].reshape(-1, 1)),
+                plt.plot(array_of_scaler[0, 0].inverse_transform(x_sample[i, :, 0].reshape(-1, 1)),
+                         array_of_scaler[0, 1].inverse_transform(x_sample[i, :, 1].reshape(-1, 1)),
                          label="Input_DENORM")
-                plt.plot(ARRAY_OF_SCALER[0, 0].inverse_transform(y_sample[i, :, 0].reshape(-1, 1)),
-                         ARRAY_OF_SCALER[0, 1].inverse_transform(y_sample[i, :, 1].reshape(-1, 1)),
+                plt.plot(array_of_scaler[0, 0].inverse_transform(y_sample[i, :, 0].reshape(-1, 1)),
+                         array_of_scaler[0, 1].inverse_transform(y_sample[i, :, 1].reshape(-1, 1)),
                          label="Correct_DENORM")
-                plt.plot(ARRAY_OF_SCALER[0, 0].inverse_transform(y_eva[i, :, 0].reshape(-1, 1)),
-                         ARRAY_OF_SCALER[0, 1].inverse_transform(y_eva[i, :, 1].reshape(-1, 1)),
+                plt.plot(array_of_scaler[0, 0].inverse_transform(y_eva[i, :, 0].reshape(-1, 1)),
+                         array_of_scaler[0, 1].inverse_transform(y_eva[i, :, 1].reshape(-1, 1)),
                          label="Prediction_DENORM")
                 plt.legend()
                 plt.grid(False)
                 plt.title(f"DENORM XY plane - Prediction n°: {i + 1}/{num_samples}")
                 # Assuming header (0,1) of topic (0) are x,y of my desired predicted output
                 file_name = "denorm_pred_n_" + str(i + 1) + "_of_" + str(num_samples) + ".pdf"
-                plt.savefig(DATA_PATH + '/plots/' + file_name)
+                plt.savefig(pl.data_path + '/plots/' + file_name)
                 # # SMOOTHED:
                 plt.figure(f"SMOOTHED Plot test {i + 1}/{num_samples}")
                 plt.plot(x_sample[i, :, 0], x_sample[i, :, 1], label="Input_SMOOTH")
@@ -195,9 +210,9 @@ class TrainTestEva:
                 plt.title(f"SMOOTHED : XY plane - Prediction n°: {i + 1}/{num_samples}")
                 # Assuming header (0,1) of topic (0) are x,y of my desired predicted output
                 file_name = "SMOOTH_pred_n_" + str(i + 1) + "_of_" + str(num_samples) + ".pdf"
-                plt.savefig(DATA_PATH + '/plots/' + file_name)
+                plt.savefig(pl.data_path + '/plots/' + file_name)
 
-    def plot_losses(self):
+    def plot_losses(self, pl = ParamLoader()):
         plt.figure("Training and test losses")
         plt.plot(self.train_losses, label="Training loss")
         plt.plot(np.arange(1, len(self.test_losses) + 1), self.test_losses, label="Test loss")
@@ -207,4 +222,6 @@ class TrainTestEva:
             plt.title("Transfer Learning case: Losses")
         else:
             plt.title("Losses")
-        plt.savefig(DATA_PATH + '/plots/' + 'Loss_vs_epoch.pdf')
+        print("stampa qua")
+        print(pl.data_path)
+        plt.savefig(pl.data_path + '/plots/' + 'Loss_vs_epoch.pdf')

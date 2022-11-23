@@ -1,14 +1,14 @@
-data_path: '/data/test'
+data_path: '/data/test1'
 
-model_name_save : '/RNN_TL_adriano.pt'         # how to save the model
+model_name_save : '/RNN_TL_davide_25epochs_iter1.pt'         # how to save the model
 model_name_load : '/RNN45mix_100epochs_iter2.pt'          # which model to load
-dataset_name    : '/dataset_15_adriano.pt'        # how to save the dataset and other parameters
+dataset_name    : '/dataset_test.pt'        # how to save the dataset and other parameters
 
 # DEFINE PARAMETERS
-preloaded_model       : True        # True se transfer learning oppure iterazioni successive alla prima, ovvero quando non si vuole inizializzare una rete
-transfer_learning     : True        # Congela i layer eccetto quello lineare finale
+preloaded_model       : False        # True se transfer learning oppure iterazioni successive alla prima, ovvero quando non si vuole inizializzare una rete
+transfer_learning     : False        # Congela i layer eccetto quello lineare finale
 use_scaler_150rec     : False        # Per le iterazioni successive alla prima uso lo stesso scaler, altrimenti ne fitta uno nuovo sul dataset
-n_epochs              : 50
+n_epochs              : 25
 hidden_dim            : 250                # Dimensione dei layer RNN
 output_int_dim_param  : 100      # dimesione output dei layer RNN
 layer_dim             : 3                   # numero di layers
@@ -23,7 +23,7 @@ headers:
   h2: ['twist.linear.x',  'twist.linear.y']
   h3: ['wrench.force.x',  'wrench.force.y']
   h4: ['pose.position.x', 'pose.position.y']
-n_of_trials: 3
+n_of_trials: 25
 
 lr        : 0.001
 threshold : 30

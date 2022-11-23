@@ -4,8 +4,8 @@ import shutil
 import rospkg
 
 # DESCRIPTION: copy and rename every '.bag' file from 'home/$USER/bag' to 'cwd/data/'
-SOURCE_FOLDER = 'test/'
-FOLDER = 'test/'
+SOURCE_FOLDER = ''
+FOLDER = 'test1/'
 user = os.getenv('USER')
 cwd = sys.path[0]
 Source_Path = '/home/' + user + '/bag/' + SOURCE_FOLDER

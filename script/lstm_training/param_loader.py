@@ -24,7 +24,7 @@ class ParamLoader:
         self.len_out    = rospy.get_param('output_seq_len')
         self.topics  = rospy.get_param('topics')
         self.headers = np.array( self.to_list(rospy.get_param('headers') ) )
-        self.n_of_trials = rospy.get_param('n_of_trials')
+        self.   n_of_trials = rospy.get_param('n_of_trials')
 
         self.input_sizes = self.compute_input_size()
         self.sum_input_size = np.sum(self.input_sizes)
@@ -37,7 +37,7 @@ class ParamLoader:
         self.gamma_fin = rospy.get_param('gamma_fin')
         self.decay     = np.geomspace(self.gamma_0 , self.gamma_fin  , self.threshold)
 
-        rospy.loginfo("params loaded")
+        rospy.loginfo("params loaded si")
 
     def to_list(self, var):
         ret = []

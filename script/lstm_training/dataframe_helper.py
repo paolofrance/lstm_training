@@ -95,8 +95,8 @@ class DataframePreparator():
                 n_elem = self.df_array[k, i].shape[0]
                 self.df_array[k, i]["length"] = np.full(n_elem, n_elem)
 
-    def to_tensor(self):
 
+    def to_tensor(self):
         data_tens = torch.zeros(self.pl.n_of_trials, self.pl.headers.shape[0], len(self.df_array[0, 0].columns), np.amax(self.n_samples).astype(int))
         # Create small tensor, fill in data_tens
         for k in np.arange(self.pl.n_of_trials):
@@ -104,3 +104,6 @@ class DataframePreparator():
                 tmp_array_debug = self.df_array[k, i].values
                 tmp_tens = torch.tensor(tmp_array_debug)
                 data_tens[k, i, :, :int(self.n_samples[k])] = tmp_tens.transpose(0,1)
+
+        return data_tens
+

@@ -67,19 +67,43 @@ def init_weights(m):                            # Initialize the weights and bia
                 torch.nn.init.constant_(param, 0.01)
 
 
-def lambda_fun(epoch, pl: ParamLoader):          # function for the LR-scheduler
+def lambda_fun(epoch, pl = ParamLoader()):          # function for the LR-scheduler
     if epoch < pl.threshold:
         lmbd = pl.decay[epoch]
     else:
         lmbd = pl.gamma_fin
     return lmbd
 
+# def lambda_fun(epoch):          # function for the LR-scheduler
+#     if epoch < the_threshold:
+#         lmbd = the_decay
+#     else:
+#         lmbd = the_gamma_fin
+#     return lmbd
+
+
 
 def ros_node():
     rospy.init_node('lstm_train', anonymous=True)
     pl = ParamLoader()
+    # epoch = 1
+    # the_decay = pl.decay[epoch]
+    # the_threshold = pl.threshold
+    # the_gamma_fin = pl.gamma_fin
+    # print("la decay e :\n " ,the_decay)
+    # print(the_threshold)
+    # print("la gammi fin è :", the_gamma_fin)
+    # print('stampa il data path:', pl.data_path)
+    # print('stampa il lstm train:', pl.lstm_training)
+    # print(pl.input_sizes)
+    # input()
+
+
 
     df = DataframePreparator(pl)
+
+    # print("press enter")
+    # input()
 
     df.drop_headers()
     df.normalizer()
@@ -89,10 +113,15 @@ def ros_node():
     data_tens = df.to_tensor()
 
     dataset = DatasetTrialsAndTopics(data_tens, pl.len_seq, pl.len_out, df.n_samples, pl.headers, pl.input_sizes, DEVICE)
+    # print("stampa il dataser qua \n ", dataset.data[1][2])
+    # print("stampa il un header \n ", dataset.headers)
+
 
     train_idx, test_idx = split_idx(df.n_samples, pl.len_seq, pl.len_out)
-
+    print("ti stampo i train")
     print(train_idx)
+    print("\n")
+    print("ti stampo i test")
     print(test_idx)
 
     # SAVE THE DATASET
@@ -102,6 +131,7 @@ def ros_node():
         print('Dataset saved')
 
     print('Dataset operations done!')
+    input("to contintue press enter")
 
     # DATALOADER FUNCTION
     train_loader, test_loader, plt_test_loader = loader(dataset, pl.batch_size, train_idx, test_idx)
@@ -134,10 +164,10 @@ def ros_node():
 
     print(train_loader)
     print(train_l)
-    input()
+    # input("press enter")
     print(test_loader)
     print(test_l)
-    input()
+    # input("press enter")
 
     # GENERATE or LOAD MY NN MODEL
     if not pl.transfer_learning:
@@ -156,27 +186,35 @@ def ros_node():
         model_path = pl.data_path + pl.model_name_load
         myNN = torch.load(model_path).to(DEVICE)
 
+
     # OPTIMIZER, LOSS FUNCTION AND SCHEDULER
     loss_fn = nn.MSELoss()
     optimizer = torch.optim.Adam(myNN.parameters(), lr=pl.lr)
     optimizer_tl = torch.optim.Adam([{'params': myNN.fc.parameters()}, {'params': myNN.int_fc.parameters()}], lr=pl.lr)
+    x = lambda_fun
+    print("lambda_fun :", x)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_fun)
+
     scheduler_tl = torch.optim.lr_scheduler.LambdaLR(optimizer_tl, lr_lambda=lambda_fun)
 
 
     # FULL TRAINING OR TRANSFER LEARNING
     do = TrainTestEva(myNN, loss_fn, optimizer, optimizer_tl, DEVICE, pl.transfer_learning)
+
     if not pl.transfer_learning:
         myNN = do.train_loop(train_loader, test_loader, pl.n_epochs, pl.sum_input_size, scheduler)
     else:
         do.train_loop(train_loader, test_loader, pl.n_epochs, pl.sum_input_size, scheduler_tl)
     do.plot_losses()
+    print("qq10")
+
     save_model = True
     if save_model:
         model_path = pl.data_path + pl.model_name_save
         torch.save(myNN, model_path)
+        print("ciao")
 
-
+    print("qq11")
 
     # Small data_loader, useful to plot some estimations
     plt_test_sampler = RandomSampler(dataset, num_samples=5)
@@ -184,12 +222,15 @@ def ros_node():
 
     n_of_tests = plt_test_loader.batch_size
 
-    do.evaluate(plt_test_loader, n_of_tests, pl.sum_input_size)
+    do.evaluate(plt_test_loader, n_of_tests, pl.sum_input_size, df.array_of_scaler)
     f = open(pl.data_path + '/used_param.txt', 'w+')
+    print("qua dovresti scrivere")
+    print(pl.data_path)
     f.write('USED PARAMS: \n LEN_SEQ = {} \n LEN_OUT = {} \n'.format(pl.len_seq, pl.len_out))
     f.write('BATCH_SIZE = {} \n TRANSFER_LEARNING = {} \n N_EPOCHS = {} \n'.format(pl.batch_size, pl.transfer_learning, pl.n_epochs))
     f.write('HIDDEN_DIM = {} \n OUTPUT_INT_DIM_PARAM = {} \n LAYER_DIM = {} \n'.format(pl.hidden_dim, pl.output_int_dim_param, pl.layer_dim))
     f.write('LR = {} \n THRESHOLD = {} \n GAMMA_0   = {} \n GAMMA_FIN = {} \n'.format(pl.lr, pl.threshold, pl.gamma_0, pl.gamma_fin))
+    print("il processo è finito")
     f.close()
 
 
